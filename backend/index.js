@@ -1,35 +1,29 @@
-import passport from "passport"
-import session from "express-session"
-import connectMongo from "connect-mongodb-session"
+import passport from "passport";
+import session from "express-session";
+import connectMongo from "connect-mongodb-session";
 
-import { ApolloServer } from "@apollo/server"
-import { startStandaloneServer } from "@apollo/server/standalone"
+import { ApolloServer } from "@apollo/server";
+import { startStandaloneServer } from "@apollo/server/standalone";
 
-import { expressMiddleware } from "@apollo/server/express4"
+import { expressMiddleware } from "@apollo/server/express4";
 
-import { ApolloServerPluginDrainHttpServer } from "@apollo/server/plugin/drainHttpServer"
+import { ApolloServerPluginDrainHttpServer } from "@apollo/server/plugin/drainHttpServer";
 
-import http from "http"
-import cors from "cors"
-import express from "express"
-import dotenv from "dotenv"
-import {  buildContext } from "graphql-passport";
+import http from "http";
+import cors from "cors";
+import express from "express";
+import dotenv from "dotenv";
+import { buildContext } from "graphql-passport";
 
+import mergedResolvers from "./resolvers/index.js";
 
-import mergedResolvers from "./resolvers/index.js"
+import mergedTypedDefs from "./typeDefs/index.js";
+import { connectDB } from "./db/connectDB.js";
 
-import mergedTypedDefs from "./typeDefs/index.js"
-import { connectDB } from "./db/connectDB.js"
-
-
-import { configurePassport } from "./passport/passport.config.js"
-
-
-
+import { configurePassport } from "./passport/passport.config.js";
 
 dotenv.config();
 configurePassport();
-
 
 // Creating Express Server for conversion
 const app = express();
@@ -40,17 +34,15 @@ const httpServer = http.createServer(app);
 //connects the express session to the mongodb
 const MongoDBStore = connectMongo(session);
 
-
 // connecting to the mongodb to store the user sessions
 const store = new MongoDBStore({
   uri: process.env.MONGO_URI,
-  collection: "sessions"
-})
+  collection: "sessions",
+});
 
-store.on("error",(err) => {
+store.on("error", (err) => {
   console.log(err);
-})
-
+});
 
 // use express session as a middleware and setting the session secret
 app.use(
@@ -62,25 +54,24 @@ app.use(
       maxAge: 1000 * 60 * 60 * 24 * 7,
       httpOnly: true, // this option prevents the cross site scripting attacks
     },
-    store: store
+    store: store,
   })
-)
-
+);
 
 app.use(passport.initialize());
 app.use(passport.session());
 
 const server = new ApolloServer({
   typeDefs: mergedTypedDefs,
-  resolvers : mergedResolvers,
+  resolvers: mergedResolvers,
   // Converting Apollo Server to Express Server
-  plugins: [ApolloServerPluginDrainHttpServer({ httpServer })]
-})
+  plugins: [ApolloServerPluginDrainHttpServer({ httpServer })],
+});
 
 await server.start();
 
 app.use(
-  '/',
+  "/graphql",
   cors({
     //react app
     origin: "http://localhost:3000",
@@ -92,14 +83,13 @@ app.use(
   // an Apollo Server instance and optional configuration options
   expressMiddleware(server, {
     // Context to be passed among all the resolvers here passing the request
-    context: async ({ req,res }) => buildContext({ req,res }),
-  }),
+    context: async ({ req, res }) => buildContext({ req, res }),
+  })
 );
 
 // Modified server startup
 await new Promise((resolve) => httpServer.listen({ port: 4000 }, resolve));
 
-
 await connectDB();
 
-console.log(`🚀 Server ready at http://localhost:4000/`);
+console.log(`🚀 Server ready at http://localhost:4000/graphql`);
