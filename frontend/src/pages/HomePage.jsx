@@ -39,7 +39,9 @@ import { GET_AUTHENTICATED_USER } from "../graphql/queries/user.query";
 ChartJS.register(ArcElement, Tooltip, Legend);
 
 const HomePage = () => {
-  const { data } = useQuery(GET_TRANSACTION_STATISTICS);
+  const { data, loading: statisticsLoading } = useQuery(
+    GET_TRANSACTION_STATISTICS
+  );
 
   const { data: authUserData } = useQuery(GET_AUTHENTICATED_USER);
 
@@ -65,9 +67,9 @@ const HomePage = () => {
 
   useEffect(() => {
     if (data?.categoryStatistics) {
-      const categories = data.categoryStatistics.map((stat) => stat.category);
+      const categories = data?.categoryStatistics.map((stat) => stat.category);
 
-      const totalAmounts = data.categoryStatistics.map(
+      const totalAmounts = data?.categoryStatistics.map(
         (stat) => stat.totalAmount
       );
 
@@ -100,7 +102,7 @@ const HomePage = () => {
         ],
       }));
     }
-  }, [data]);
+  }, [data, statisticsLoading]);
 
   const handleLogout = async () => {
     try {
@@ -121,7 +123,7 @@ const HomePage = () => {
             Spend wisely, track wisely
           </p>
           <img
-            src={authUserData?.authUser.profilePicture}
+            src={authUserData?.authUser?.profilePicture}
             className="w-11 h-11 rounded-full border cursor-pointer"
             alt="Avatar"
           />
@@ -137,7 +139,7 @@ const HomePage = () => {
           )}
         </div>
         <div className="flex flex-wrap w-full justify-center items-center gap-6">
-          {data.categoryStatistics.length > 0 && (
+          {data?.categoryStatistics.length > 0 && (
             <div className="h-[330px] w-[330px] md:h-[360px] md:w-[360px]  ">
               <Doughnut data={chartData} />
             </div>
