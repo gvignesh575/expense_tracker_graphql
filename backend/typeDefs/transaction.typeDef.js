@@ -14,6 +14,13 @@ const transactionTypeDef = `#graphql
     type Query{
         transactions: [Transaction!]
         transaction(transactionId: ID!): Transaction
+        categoryStatistics: [CategoryStatistics!]
+    }
+
+
+    type CategoryStatistics {
+        category: String!
+        totalAmount: Float!
     }
 
 
@@ -46,6 +53,6 @@ const transactionTypeDef = `#graphql
     }
 
 
-`
+`;
 
-export default transactionTypeDef
+export default transactionTypeDef;
